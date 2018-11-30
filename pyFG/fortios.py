@@ -19,7 +19,7 @@ logger = logging.getLogger('pyFG')
 
 class FortiOS(object):
 
-    def __init__(self, hostname, vdom=None, username=None, password=None, keyfile=None, timeout=60):
+    def __init__(self, hostname, port=22, vdom=None, username=None, password=None, keyfile=None, timeout=60):
         """
         Represents a device running FortiOS.
 
@@ -38,6 +38,7 @@ class FortiOS(object):
 
         Args:
             * **hostname** (str) -- FQDN or IP of the device you want to connect.
+            * **port** (int) -- SSH port, 22 by default.
             * **vdom** (str) -- VDOM you want to connect to. If it is None we will run the commands without moving\
                 to a VDOM.
             * **username** (str) -- Username to connect to the device. If none is specified the current user will be\
@@ -48,6 +49,7 @@ class FortiOS(object):
 
         """
         self.hostname = hostname
+        self.port = port
         self.vdom = vdom
         self.original_config = None
         self.running_config = FortiConfig('running', vdom=vdom)
@@ -57,14 +59,14 @@ class FortiOS(object):
         self.password = password
         self.keyfile = keyfile
         self.timeout = timeout
-        
+
         # Set key exchange explcitly to address known fortinet issue
         paramiko.Transport._preferred_kex = ('diffie-hellman-group14-sha1',
                                              'diffie-hellman-group-exchange-sha1',
                                              'diffie-hellman-group-exchange-sha256',
                                              'diffie-hellman-group1-sha1',
                                              )
-        
+
     def open(self):
         """
         Opens the ssh session with the device.
@@ -77,6 +79,7 @@ class FortiOS(object):
 
         cfg = {
             'hostname': self.hostname,
+            'port': self.port,
             'timeout': self.timeout,
             'username': self.username,
             'password': self.password,
@@ -99,6 +102,8 @@ class FortiOS(object):
                     cfg['key_filename'] = host_conf['identityfile']
                 if 'hostname' in host_conf:
                     cfg['hostname'] = host_conf['hostname']
+                if 'port' in host_conf:
+                    cfg['port'] = host_conf['port']
 
         self.ssh.connect(**cfg)
 
